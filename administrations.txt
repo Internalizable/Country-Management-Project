@@ -1,0 +1,6 @@
+3191	31	Ministry of Health	49
+4131	31	Ministry of Education	54
+3241	31	Ministry of Work	65
+4013	31	Ministry of Public Works	78
+3948	31	Ministry of Information	31
+3481	31	Ministry of Defence	31
