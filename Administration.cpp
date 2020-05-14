@@ -178,12 +178,12 @@ void deleteAdministration(Administration T[], int& administrationSize, int idAdm
 
 }
 
-int readAdministrationFromDisk(Administration administration[])
+int readAdministrationFromDisk(Administration administration[], Country TC[], int TC_SIZE)
 {
 	ifstream adminFile;
 	string line;
 
-	adminFile.open("administrations.txt");
+	adminFile.open("administrations.csv");
 
 	int count = 0;
 
@@ -199,17 +199,35 @@ int readAdministrationFromDisk(Administration administration[])
 	{
 		stringstream ss(line);
 
-		getline(ss, administrationID, '\t');
-		getline(ss, countryID, '\t');
-		getline(ss, name, '\t');
-		getline(ss, currentValue, '\t');
+		getline(ss, administrationID, ',');
+		getline(ss, countryID, ',');
+		getline(ss, name, ',');
+		getline(ss, currentValue, ',');
+		
+		try {
 
-		administration[count].idAdministration = stoi(administrationID);
-		administration[count].idCountry = stoi(countryID);
-		administration[count].name = name;
-		administration[count].currentValue = stoi(currentValue);
+			if (doesCountryExist(stoi(countryID), TC, TC_SIZE)
+				&& stoi(currentValue) >= 0 && stoi(currentValue) <= 100)
+			{
+				administration[count].idAdministration = stoi(administrationID);
+				administration[count].idCountry = stoi(countryID);
+				administration[count].name = name;
+				administration[count].currentValue = stoi(currentValue);
 
-		count++;
+				count++;
+			}
+			else
+			{
+				cout << endl << "A reading exception occured whilst reading an administration with id " << administrationID << endl;
+				cout << "Please double check that the fields are in their correct types and are of compatible values, this administration will be disregarded." << endl << endl;
+			}
+
+		}
+		catch (exception e) {
+			cout << endl << "A casting exception occured whilst reading an administration with id " << administrationID << endl;
+			cout << "Please double check that the fields are in their correct types, this administration will be disregarded." << endl << endl;
+		}
+
 	}
 
 	adminFile.close();
@@ -220,7 +238,7 @@ int readAdministrationFromDisk(Administration administration[])
 string getAdministrationFormat(Administration administration)
 {
 	stringstream format;
-	format << administration.idAdministration << "\t" << administration.idCountry << "\t" << administration.name << "\t" << administration.currentValue;
+	format << administration.idAdministration << "," << administration.idCountry << "," << administration.name << "," << administration.currentValue;
 
 	return format.str();
 }
@@ -229,7 +247,7 @@ void writeAdministrationsToDisk(Administration administration[], int TA_SIZE)
 {
 	string currentLine;
 
-	ofstream adminFile("administrations.txt");
+	ofstream adminFile("administrations.csv");
 
 	if (adminFile.is_open()) {
 		for(int i = 0; i < TA_SIZE; i++)
@@ -241,7 +259,7 @@ void writeAdministrationsToDisk(Administration administration[], int TA_SIZE)
 
 void reloadAdministrations(Administration administration[], int TA_SIZE)
 {
-	remove("administrations.txt");
+	remove("administrations.csv");
 	writeAdministrationsToDisk(administration, TA_SIZE);
 }
 

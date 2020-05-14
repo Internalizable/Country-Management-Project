@@ -192,12 +192,12 @@ void deleteAssessment(Assessment T[], int &assessmentSize, int idAssessment) {
 	assessmentSize--;
 }
 
-int readAssessmentFromDisk(Assessment assessment[])
+int readAssessmentFromDisk(Assessment assessment[], Administration TA[], int TA_SIZE)
 {
 	ifstream assessments;
 	string line;
 
-	assessments.open("assessments.txt");
+	assessments.open("assessments.csv");
 
 	int count = 0;
 
@@ -207,31 +207,49 @@ int readAssessmentFromDisk(Assessment assessment[])
 		return 0;
 	}
 
-	string assessmentID, administrationID, value, year, month, evaluator;
+	string assessmentID, administrationID, value, year, month, evaluatorString;
 
 	while (getline(assessments, line))
 	{
 		stringstream ss(line);
 
-		getline(ss, assessmentID, '\t');
-		getline(ss, administrationID, '\t');
-		getline(ss, value, '\t');
-		getline(ss, year, '\t');
-		getline(ss, month, '\t');
-		getline(ss, evaluator, '\t');
+		getline(ss, assessmentID, ',');
+		getline(ss, administrationID, ',');
+		getline(ss, value, ',');
+		getline(ss, year, ',');
+		getline(ss, month, ',');
+		getline(ss, evaluatorString, ',');
 
-		assessment[count].idAssessment = stoi(assessmentID);
-		assessment[count].idAdministration = stoi(administrationID);
-		assessment[count].value = stoi(value);
-		assessment[count].year = stoi(year);
-		assessment[count].month = stoi(month);
+		try {
 
-		for (int i = 0; i < evaluator.length(); i++)
+			if (doesAdministrationExist(stoi(administrationID), TA, 0, TA_SIZE - 1)
+					&& stoi(value) >= 0 && stoi(value) <= 100 && stoi(year) >= 0 && stoi(month) >= 1 && stoi(month) <= 12)
+			{
+				assessment[count].idAssessment = stoi(assessmentID);
+				assessment[count].idAdministration = stoi(administrationID);
+				assessment[count].value = stoi(value);
+				assessment[count].year = stoi(year);
+				assessment[count].month = stoi(month);
+
+				for (int i = 0; i <= evaluatorString.length(); i++)
+				{
+					assessment[count].evaluator[i] = evaluatorString[i];
+				}
+
+				count++;
+			}
+			else
+			{
+				cout << endl << "A reading exception occured whilst reading an assessment with id " << assessmentID << endl;
+				cout << "Please double check that the fields are in their correct types and are of compatible values, this assessment will be disregarded." << endl << endl;
+			}
+
+		} catch (exception e)
 		{
-			assessment[count].evaluator[i] = evaluator[i];
+			cout << endl << "A casting exception occured whilst reading an assessment with id " << assessmentID << endl;
+			cout << "Please double check that the fields are in their correct types, this assessment will be disregarded." << endl << endl;
 		}
 
-		count++;
 	}
 
 	assessments.close();
@@ -242,7 +260,7 @@ int readAssessmentFromDisk(Assessment assessment[])
 string getAssessmentFormat(Assessment assessment)
 {
 	stringstream format;
-	format << assessment.idAssessment << "\t" << assessment.idAdministration << "\t" << assessment.value << "\t" << assessment.year << "\t" << assessment.month << "\t" << assessment.evaluator;
+	format << assessment.idAssessment << "," << assessment.idAdministration << "," << assessment.value << "," << assessment.year << "," << assessment.month << "," << assessment.evaluator;
 
 	return format.str();
 }
@@ -251,7 +269,7 @@ void writeAssessmentToDisk(Assessment assessment[], int TS_SIZE)
 {
 	string currentLine;
 
-	ofstream assFile("assessments.txt");
+	ofstream assFile("assessments.csv");
 
 	if (assFile.is_open()) {
 		for (int i = 0; i < TS_SIZE; i++)
@@ -263,7 +281,7 @@ void writeAssessmentToDisk(Assessment assessment[], int TS_SIZE)
 
 void reloadAssessments(Assessment assessment[], int TS_SIZE)
 {
-	remove("assessments.txt");
+	remove("assessments.csv");
 	writeAssessmentToDisk(assessment, TS_SIZE);
 }
 

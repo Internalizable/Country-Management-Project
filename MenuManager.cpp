@@ -25,7 +25,7 @@ void sortAdministrationAscending(Administration T[], int first, int last);
 void displayEvolution(int administrationID, Assessment* T, int size, int startYear, int endYear);
 void insertAdministration(Administration administration, Administration TA[], int& TA_SIZE);
 void deleteAdministration(Administration T[], int& administrationSize, int idAdmin);
-int readAdministrationFromDisk(Administration administration[]);
+int readAdministrationFromDisk(Administration administration[], Country TC[], int TC_SIZE);
 void reloadAdministrations(Administration administration[], int TA_SIZE);
 
 bool doesAssessmentExist(int assessmentID, Assessment* T, int size);
@@ -35,7 +35,7 @@ void sortAssessmentAscending(Assessment T[], int first, int last);
 void insertAssessment(Assessment assessment, Assessment T[], Administration A[], int& assessmentSize, int administrationSize);
 void deleteAssessment(Assessment T[], int& assessmentSize, int idAssessment);
 void displayAssessment(Assessment T);
-int readAssessmentFromDisk(Assessment assessment[]);
+int readAssessmentFromDisk(Assessment assessment[], Administration TA[], int TA_SIZE);
 void reloadAssessments(Assessment assessment[], int TS_SIZE);
 
 
@@ -157,18 +157,34 @@ void openCreationMenu(Country TC[], Administration TA[], Assessment TS[], int TC
 
 	case ADMINISTRATION_CREATION:
 	{
-		Administration administration = createAdministration(TA, TC, TA_SIZE, TC_SIZE);
-		insertAdministration(administration, TA, TA_SIZE);
-		reloadAdministrations(TA, TA_SIZE);
+		
+		if (TC_SIZE != 0)
+		{
+			Administration administration = createAdministration(TA, TC, TA_SIZE, TC_SIZE);
+			insertAdministration(administration, TA, TA_SIZE);
+			reloadAdministrations(TA, TA_SIZE);
+		}
+		else
+		{
+			cout << endl << "Error! Please create a country before creating an administration." << endl << endl;
+		}
+		
 
 		openCreationMenu(TC, TA, TS, TC_SIZE, TA_SIZE, TS_SIZE);
 		break;
 	}
 	case ASSESSMENT_CREATION:
 	{
-		Assessment assessment = createAssessment(TS, TS_SIZE, TA, TA_SIZE);
-		insertAssessment(assessment, TS, TA, TS_SIZE, TA_SIZE);
-		reloadAssessments(TS, TS_SIZE);
+		if (TA_SIZE != 0)
+		{
+			Assessment assessment = createAssessment(TS, TS_SIZE, TA, TA_SIZE);
+			insertAssessment(assessment, TS, TA, TS_SIZE, TA_SIZE);
+			reloadAssessments(TS, TS_SIZE);
+		}
+		else
+		{
+			cout << endl << "Error! Please create an administration before creating an assessment." << endl << endl;
+		}
 
 		openCreationMenu(TC, TA, TS, TC_SIZE, TA_SIZE, TS_SIZE);
 		break;
@@ -548,6 +564,7 @@ void openMainMenu(Country TC[], Administration TA[], Assessment TS[], int TC_SIZ
 		reloadCountries(TC, TC_SIZE);
 		reloadAdministrations(TA, TA_SIZE);
 		reloadAssessments(TS, TS_SIZE);
+		openMainMenu(TC, TA, TS, TC_SIZE, TA_SIZE, TS_SIZE);
 		break;
 	}
 }
@@ -558,9 +575,9 @@ void getStartupConfigurations()
 	Administration TA[1000];
 	Assessment TS[1000];
 
-	int TC_SIZE = readCountryFromDisk(TC), 
-		TA_SIZE = readAdministrationFromDisk(TA), 
-		TS_SIZE = readAssessmentFromDisk(TS);
+	int TC_SIZE = readCountryFromDisk(TC),
+		TA_SIZE = readAdministrationFromDisk(TA, TC, TC_SIZE),
+		TS_SIZE = readAssessmentFromDisk(TS, TA, TA_SIZE);
 
 	openMainMenu(TC, TA, TS, TC_SIZE, TA_SIZE, TS_SIZE);
 }

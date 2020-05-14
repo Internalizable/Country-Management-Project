@@ -136,7 +136,7 @@ int readCountryFromDisk(Country country[])
 	ifstream countries;
 	string line;
 
-	countries.open("countries.txt");
+	countries.open("countries.csv");
 
 	int count = 0;
 
@@ -152,13 +152,20 @@ int readCountryFromDisk(Country country[])
 	{
 		stringstream ss(line);
 
-		getline(ss, countryID, '\t');
-		getline(ss, countryName, '\t');
+		getline(ss, countryID, ',');
+		getline(ss, countryName, ',');
 
-		country[count].idCountry = stoi(countryID);
-		country[count].name = countryName;
+		try {
+			country[count].idCountry = stoi(countryID);
+			country[count].name = countryName;
 
-		count++;
+			count++;
+		}
+		catch (exception e)
+		{
+			cout << endl << "A casting exception occured whilst reading a country with id " << countryID << endl;
+			cout << "Please double check that the fields are in their correct types, this country will be disregarded." << endl << endl;
+		}
 	}
 
 	countries.close();
@@ -169,7 +176,7 @@ int readCountryFromDisk(Country country[])
 string getCountryFormat(Country country)
 {
 	stringstream format;
-	format << country.idCountry << "\t" << country.name;
+	format << country.idCountry << "," << country.name;
 
 	return format.str();
 }
@@ -178,7 +185,7 @@ void writeCountriesToDisk(Country country[], int TC_SIZE)
 {
 	string currentLine;
 
-	ofstream countryFile("countries.txt");
+	ofstream countryFile("countries.csv");
 
 	if (countryFile.is_open()) {
 		for (int i = 0; i < TC_SIZE; i++)
@@ -190,6 +197,6 @@ void writeCountriesToDisk(Country country[], int TC_SIZE)
 
 void reloadCountries(Country country[], int TC_SIZE)
 {
-	remove("countries.txt");
+	remove("countries.csv");
 	writeCountriesToDisk(country, TC_SIZE);
 }
