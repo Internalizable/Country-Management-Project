@@ -5,6 +5,8 @@
 #include "DataTypes.h"
 using namespace std;
 
+const string ADMINISTRATION_PATH = "data\\administrations.csv";
+
 bool doesCountryExist(int countryID, Country* T, int size);
 void sortAdministrationAscending(Administration T[], int first, int last);
 void displayAssessment(Assessment T);
@@ -102,7 +104,7 @@ void findAdministration(Administration* T, int size, int administrationID)
 	}
 }
 
-void partitionAdministration(Administration T[], int first, int last, int& pivindex)
+void partitionAdministrationAscending(Administration T[], int first, int last, int& pivindex)
 {
 	int pivot = T[first].idAdministration, up = first, down = last;
 
@@ -128,17 +130,56 @@ void partitionAdministration(Administration T[], int first, int last, int& pivin
 	pivindex = down;
 }
 
+void partitionAdministrationDescending(Administration T[], int first, int last, int& pivindex)
+{
+	int pivot = T[first].idAdministration, up = first, down = last;
+
+	do {
+		while (T[up].idAdministration >= pivot && up < last)
+			up++;
+		while (T[down].idAdministration < pivot)
+			down--;
+
+		if (up < down)
+		{
+			Administration temp = T[up];
+			T[up] = T[down];
+			T[down] = temp;
+		}
+
+	} while (up < down);
+
+	Administration temp = T[first];
+	T[first] = T[down];
+	T[down] = temp;
+
+	pivindex = down;
+}
+
 void sortAdministrationAscending(Administration T[], int first, int last)
 {
 	int pivindex; 
 
 	if (first < last) { 
-		partitionAdministration(T, first, last, pivindex);
+		partitionAdministrationAscending(T, first, last, pivindex);
 		sortAdministrationAscending(T, first, pivindex-1);
 		sortAdministrationAscending(T, pivindex+1, last);
 	}
 
 }
+
+void sortAdministrationDescending(Administration T[], int first, int last)
+{
+	int pivindex;
+
+	if (first < last) {
+		partitionAdministrationDescending(T, first, last, pivindex);
+		sortAdministrationDescending(T, first, pivindex - 1);
+		sortAdministrationDescending(T, pivindex + 1, last);
+	}
+
+}
+
 
 void insertAdministration(Administration administration, Administration TA[], int& TA_SIZE)
 {
@@ -183,13 +224,18 @@ int readAdministrationFromDisk(Administration administration[], Country TC[], in
 	ifstream adminFile;
 	string line;
 
-	adminFile.open("administrations.csv");
+	adminFile.open(ADMINISTRATION_PATH.c_str());
 
 	int count = 0;
 
 	if (!adminFile.is_open())
 	{
-		cout << "File failed to open!" << endl;
+		cout << endl << "\aThe administrations file has not been found! Generating a new one..." << endl << endl;
+		ofstream generateFile(ADMINISTRATION_PATH.c_str());
+		
+		if (generateFile.is_open())
+			generateFile.close();
+
 		return 0;
 	}
 
@@ -206,20 +252,38 @@ int readAdministrationFromDisk(Administration administration[], Country TC[], in
 		
 		try {
 
-			if (doesCountryExist(stoi(countryID), TC, TC_SIZE)
-				&& stoi(currentValue) >= 0 && stoi(currentValue) <= 100)
+			if (doesCountryExist(stoi(countryID), TC, TC_SIZE))
 			{
-				administration[count].idAdministration = stoi(administrationID);
-				administration[count].idCountry = stoi(countryID);
-				administration[count].name = name;
-				administration[count].currentValue = stoi(currentValue);
+				if (stoi(currentValue) >= 0 && stoi(currentValue) <= 100)
+				{
 
-				count++;
+					if (!doesAdministrationExist(stoi(administrationID), administration, 0, count - 1))
+					{
+						administration[count].idAdministration = stoi(administrationID);
+						administration[count].idCountry = stoi(countryID);
+						administration[count].name = name;
+						administration[count].currentValue = stoi(currentValue);
+
+						count++;
+					}
+					else
+					{
+						cout << endl << "A reading exception occured whilst reading an administration with id " << administrationID << endl;
+						cout << "Please double check that the administration id is unique and it doesn't conflict with existing IDS." << endl << endl;
+					}
+
+				}
+				else
+				{
+					cout << endl << "A reading exception occured whilst reading an administration with id " << administrationID << endl;
+					cout << "The current value of this administration must be between 0 and 100, this administration will be discarded." << endl << endl;
+				}
+
 			}
 			else
 			{
 				cout << endl << "A reading exception occured whilst reading an administration with id " << administrationID << endl;
-				cout << "Please double check that the fields are in their correct types and are of compatible values, this administration will be disregarded." << endl << endl;
+				cout << "There is no country mapped with this ID! Please use a valid country ID, this administration will be discarded." << endl << endl;
 			}
 
 		}
@@ -247,7 +311,7 @@ void writeAdministrationsToDisk(Administration administration[], int TA_SIZE)
 {
 	string currentLine;
 
-	ofstream adminFile("administrations.csv");
+	ofstream adminFile(ADMINISTRATION_PATH.c_str());
 
 	if (adminFile.is_open()) {
 		for(int i = 0; i < TA_SIZE; i++)
@@ -259,7 +323,7 @@ void writeAdministrationsToDisk(Administration administration[], int TA_SIZE)
 
 void reloadAdministrations(Administration administration[], int TA_SIZE)
 {
-	remove("administrations.csv");
+	remove(ADMINISTRATION_PATH.c_str());
 	writeAdministrationsToDisk(administration, TA_SIZE);
 }
 

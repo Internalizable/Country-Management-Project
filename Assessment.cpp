@@ -5,11 +5,13 @@
 #include "DataTypes.h"
 using namespace std;
 
+const string ASSESSMENT_PATH = "data\\assessments.csv";
+
 bool doesAdministrationExist(int administrationID, Administration* T, int a, int b);
 
-bool doesAssessmentExist(int assessmentID, Assessment* T, int size)
+bool doesAssessmentExist(int assessmentID, Assessment* T, int TS_SIZE)
 {
-	for (int i = 0; i < size; i++)
+	for (int i = 0; i < TS_SIZE; i++)
 		if ((T + i)->idAssessment == assessmentID)
 			return true;
 
@@ -104,7 +106,7 @@ void findAssessment(Assessment* T, int size, int assessmentID)
 	}
 }
 
-void partitionAssessment(Assessment T[], int first, int last, int& pivindex)
+void partitionAssessmentAscending(Assessment T[], int first, int last, int& pivindex)
 {
 	int pivot = T[first].idAdministration, up = first, down = last;
 
@@ -130,14 +132,52 @@ void partitionAssessment(Assessment T[], int first, int last, int& pivindex)
 	pivindex = down;
 }
 
+void partitionAssessmentDescending(Assessment T[], int first, int last, int& pivindex)
+{
+	int pivot = T[first].idAdministration, up = first, down = last;
+
+	do {
+		while (T[up].idAdministration >= pivot && up < last)
+			up++;
+		while (T[down].idAdministration < pivot)
+			down--;
+
+		if (up < down)
+		{
+			Assessment temp = T[up];
+			T[up] = T[down];
+			T[down] = temp;
+		}
+
+	} while (up < down);
+
+	Assessment temp = T[first];
+	T[first] = T[down];
+	T[down] = temp;
+
+	pivindex = down;
+}
+
 void sortAssessmentAscending(Assessment T[], int first, int last)
 {
 	int pivindex;
 
 	if (first < last) {
-		partitionAssessment(T, first, last, pivindex);
+		partitionAssessmentAscending(T, first, last, pivindex);
 		sortAssessmentAscending(T, first, pivindex - 1);
 		sortAssessmentAscending(T, pivindex + 1, last);
+	}
+
+}
+
+void sortAssessmentDescending(Assessment T[], int first, int last)
+{
+	int pivindex;
+
+	if (first < last) {
+		partitionAssessmentDescending(T, first, last, pivindex);
+		sortAssessmentDescending(T, first, pivindex - 1);
+		sortAssessmentDescending(T, pivindex + 1, last);
 	}
 
 }
@@ -197,13 +237,18 @@ int readAssessmentFromDisk(Assessment assessment[], Administration TA[], int TA_
 	ifstream assessments;
 	string line;
 
-	assessments.open("assessments.csv");
+	assessments.open(ASSESSMENT_PATH.c_str());
 
 	int count = 0;
 
 	if (!assessments.is_open())
 	{
-		cout << "File failed to open!" << endl;
+		cout << endl << "\aThe assessments file has not been found! Generating a new one..." << endl << endl;
+		ofstream generateFile(ASSESSMENT_PATH.c_str());
+
+		if (generateFile.is_open())
+			generateFile.close();
+
 		return 0;
 	}
 
@@ -222,26 +267,55 @@ int readAssessmentFromDisk(Assessment assessment[], Administration TA[], int TA_
 
 		try {
 
-			if (doesAdministrationExist(stoi(administrationID), TA, 0, TA_SIZE - 1)
-					&& stoi(value) >= 0 && stoi(value) <= 100 && stoi(year) >= 0 && stoi(month) >= 1 && stoi(month) <= 12)
+			if (doesAdministrationExist(stoi(administrationID), TA, 0, TA_SIZE - 1))
 			{
-				assessment[count].idAssessment = stoi(assessmentID);
-				assessment[count].idAdministration = stoi(administrationID);
-				assessment[count].value = stoi(value);
-				assessment[count].year = stoi(year);
-				assessment[count].month = stoi(month);
 
-				for (int i = 0; i <= evaluatorString.length(); i++)
+				if (stoi(value) >= 0 && stoi(value) <= 100)
 				{
-					assessment[count].evaluator[i] = evaluatorString[i];
-				}
 
-				count++;
+					if (stoi(year) >= 0 && stoi(month) >= 1 && stoi(month) <= 12)
+					{
+
+						if (!doesAssessmentExist(stoi(assessmentID), assessment, count))
+						{
+							assessment[count].idAssessment = stoi(assessmentID);
+							assessment[count].idAdministration = stoi(administrationID);
+							assessment[count].value = stoi(value);
+							assessment[count].year = stoi(year);
+							assessment[count].month = stoi(month);
+
+							for (int i = 0; i <= evaluatorString.length(); i++)
+							{
+								assessment[count].evaluator[i] = evaluatorString[i];
+							}
+
+							count++;
+						}
+						else
+						{
+							cout << endl << "A reading exception occured whilst reading an assessment with id " << assessmentID << endl;
+							cout << "The assessmentID value mapped with this assessment already exists once! This assessment will be discarded." << endl << endl;
+						}
+					}
+					else
+					{
+						cout << endl << "A reading exception occured whilst reading an assessment with id " << assessmentID << endl;
+						cout << "The year/month value mapped with this assessment is invalid! This assessment will be discarded." << endl << endl;
+					}
+
+				}
+				else
+				{
+					cout << endl << "A reading exception occured whilst reading an assessment with id " << assessmentID << endl;
+					cout << "The value mapped with this assessment is invalid, it must be between 0 and 100! This assessment will be discarded." << endl << endl;
+				}
+					
+
 			}
 			else
 			{
 				cout << endl << "A reading exception occured whilst reading an assessment with id " << assessmentID << endl;
-				cout << "Please double check that the fields are in their correct types and are of compatible values, this assessment will be disregarded." << endl << endl;
+				cout << "The administration ID mapped with this assessment is invalid! This assessment will be discarded." << endl << endl;
 			}
 
 		} catch (exception e)
@@ -269,7 +343,7 @@ void writeAssessmentToDisk(Assessment assessment[], int TS_SIZE)
 {
 	string currentLine;
 
-	ofstream assFile("assessments.csv");
+	ofstream assFile(ASSESSMENT_PATH.c_str());
 
 	if (assFile.is_open()) {
 		for (int i = 0; i < TS_SIZE; i++)
@@ -281,7 +355,7 @@ void writeAssessmentToDisk(Assessment assessment[], int TS_SIZE)
 
 void reloadAssessments(Assessment assessment[], int TS_SIZE)
 {
-	remove("assessments.csv");
+	remove(ASSESSMENT_PATH.c_str());
 	writeAssessmentToDisk(assessment, TS_SIZE);
 }
 

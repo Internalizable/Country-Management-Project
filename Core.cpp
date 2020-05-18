@@ -1,23 +1,54 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 #include "sha256.h"
 #include "DataTypes.h"
 
 using namespace std;
 
-void getStartupConfigurations();
+const int LOGIN_MAX_ROWS = 50, LOGIN_MAX_COLUMNS = 2;
+void getStartupConfigurations(string login[][LOGIN_MAX_COLUMNS], int userAmount);
 
+/*
+ * Checks if the given user values by the user exists in the file, saved to a 2D array
+ * @param usernameHashed, passwordHashed, dataList, numberOfUsers
+*/
+bool doesUserExist(string usernameHashed, string passwordHashed, string dataList[][LOGIN_MAX_COLUMNS], int numberOfUsers)
+{
+	for (int i = 0; i < numberOfUsers; i++)
+	{
+		if (dataList[i][0] == usernameHashed && dataList[i][1] == passwordHashed)
+			return true;
+	}
+
+	return false;
+}
+
+
+/*
+ * Main function, verifies login information and reads information from the file and saves it to a 2D array.
+*/
 int main()
 {
+	string logins[LOGIN_MAX_ROWS][LOGIN_MAX_COLUMNS];
+	int count = 0;
+
 	ifstream readLogin;
 	string currentUsername, currentPassword;
 
-	readLogin.open("login.txt");
+	if (filesystem::create_directory("data"))
+		cout << "MANAGEMENT: Succesfully created data directory!" << endl << endl;
 
-	if (readLogin.fail()) {
+	readLogin.open("data\\login.txt");
+
+	cout << "\t***********************************************************" << endl;
+	cout << "\a\t      Public Innovations Management - Authentication Login" << endl;
+	cout << "\t***********************************************************" << endl << endl;
+
+	if (readLogin.fail() || readLogin.peek() == ifstream::traits_type::eof()) {
 		ofstream writeLogin;
-		writeLogin.open("login.txt");
+		writeLogin.open("data\\login.txt");
 
 		cout << "First login detected, welcome! Please create login details below:" << endl;
 
@@ -25,10 +56,15 @@ int main()
 		getline(cin, currentUsername);
 
 		cout << "Please input the password: ";
-		cin.ignore();
 		getline(cin, currentPassword);
 
-		writeLogin << sha256(currentUsername) << "\t" << sha256(currentPassword);
+		writeLogin << sha256(currentUsername) << "\t" << sha256(currentPassword) << endl;
+
+		logins[count][0] = sha256(currentUsername);
+		logins[count][1] = sha256(currentPassword);
+
+		count++;
+		cout << endl;
 	}
 	else
 	{
@@ -40,29 +76,36 @@ int main()
 			stringstream ss(currentLine);
 			getline(ss, trueUsername, '\t');
 			getline(ss, truePassword, '\t');
+
+			logins[count][0] = trueUsername;
+			logins[count][1] = truePassword;
+
+			count++;
 		}
 
 		cout << "Please input the username: ";
 		getline(cin, currentUsername);
 
 		cout << "Please input the password: ";
-		cin.ignore();
 		getline(cin, currentPassword);
 
-		while (sha256(currentUsername) != trueUsername || sha256(currentPassword) != truePassword)
+		cout << endl;
+
+		while (!doesUserExist(sha256(currentUsername), sha256(currentPassword), logins, count))
 		{
-			cout << "Incorrect username or password; please try again!" << endl;
+			cout << "\aIncorrect username or password; please try again!" << endl;
 
 			cout << "Please input the username: ";
 			getline(cin, currentUsername);
 
 			cout << "Please input the password: ";
-			cin.ignore();
 			getline(cin, currentPassword);
+
+			cout << endl;
 		}
 
 	}
 
 
-	getStartupConfigurations();
+	getStartupConfigurations(logins, count);
 }

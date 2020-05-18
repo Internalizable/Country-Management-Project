@@ -5,6 +5,8 @@
 #include "DataTypes.h"
 using namespace std;
 
+const string COUNTRIES_PATH = "data\\countries.csv";
+
 bool doesCountryExist(int countryID, Country* T, int size)
 {
 	for (int i = 0; i < size; i++)
@@ -84,6 +86,24 @@ void sortCountryAscending(Country* T, int size)
 	}
 }
 
+void sortCountryDescending(Country* T, int size)
+{
+	int posmin;
+
+	for (int i = 0; i < size - 1; i++)
+	{
+		posmin = i;
+
+		for (int j = i + 1; j < size; j++)
+			if ((T + j)->idCountry > (T + posmin)->idCountry)
+				posmin = j;
+
+		Country temp = *(T + posmin);
+		*(T + posmin) = *(T + i);
+		*(T + i) = temp;
+	}
+}
+
 void insertCountry(Country country, Country T[], int& countrySize)
 {
 	T[countrySize] = country;
@@ -136,13 +156,18 @@ int readCountryFromDisk(Country country[])
 	ifstream countries;
 	string line;
 
-	countries.open("countries.csv");
+	countries.open(COUNTRIES_PATH.c_str());
 
 	int count = 0;
 
 	if (!countries.is_open())
 	{
-		cout << "File failed to open!" << endl;
+		cout << endl << "\aThe countries file has not been found! Generating a new one..." << endl << endl;
+		ofstream generateFile(COUNTRIES_PATH.c_str());
+
+		if (generateFile.is_open())
+			generateFile.close();
+
 		return 0;
 	}
 	
@@ -156,10 +181,20 @@ int readCountryFromDisk(Country country[])
 		getline(ss, countryName, ',');
 
 		try {
-			country[count].idCountry = stoi(countryID);
-			country[count].name = countryName;
 
-			count++;
+			if (!doesCountryExist(stoi(countryID), country, count))
+			{
+				country[count].idCountry = stoi(countryID);
+				country[count].name = countryName;
+
+				count++;
+			}
+			else
+			{
+				cout << endl << "A conflict exception occured whilst reading a country with id " << countryID << endl;
+				cout << "Please double check that the country id is unique and it doesn't conflict with existing IDS." << endl << endl;
+			}
+
 		}
 		catch (exception e)
 		{
@@ -185,7 +220,7 @@ void writeCountriesToDisk(Country country[], int TC_SIZE)
 {
 	string currentLine;
 
-	ofstream countryFile("countries.csv");
+	ofstream countryFile(COUNTRIES_PATH.c_str());
 
 	if (countryFile.is_open()) {
 		for (int i = 0; i < TC_SIZE; i++)
@@ -197,6 +232,6 @@ void writeCountriesToDisk(Country country[], int TC_SIZE)
 
 void reloadCountries(Country country[], int TC_SIZE)
 {
-	remove("countries.csv");
+	remove(COUNTRIES_PATH.c_str());
 	writeCountriesToDisk(country, TC_SIZE);
 }
