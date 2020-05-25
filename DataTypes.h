@@ -4,6 +4,9 @@ using namespace std;
 #ifndef DATATYPES_H
 #define DATATYPES_H
 
+const int LOGIN_MAX_ROWS = 50, LOGIN_MAX_COLUMNS = 2,
+	TC_MAX_SIZE = 250, TA_MAX_SIZE = 1000, TS_MAX_SIZE = 1000;
+
 struct Country
 {
 	int idCountry;

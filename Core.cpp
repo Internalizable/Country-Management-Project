@@ -7,7 +7,6 @@
 
 using namespace std;
 
-const int LOGIN_MAX_ROWS = 50, LOGIN_MAX_COLUMNS = 2;
 void getStartupConfigurations(string login[][LOGIN_MAX_COLUMNS], int userAmount);
 
 /*

@@ -106,8 +106,13 @@ void sortCountryDescending(Country* T, int size)
 
 void insertCountry(Country country, Country T[], int& countrySize)
 {
-	T[countrySize] = country;
-	countrySize++;
+	if (countrySize != TC_MAX_SIZE)
+	{
+		T[countrySize] = country;
+		countrySize++;
+	}
+	else
+		cout << endl << "ERROR: Unable to add more entries to the country array, please consider deleting countries before trying to add/create new ones!" << endl;
 }
 
 void deleteCountry(Country T[], int &countrySize, int idCountry) {
@@ -154,11 +159,13 @@ void displayAdministrationsByValue(int countryID, Administration* T, int size, i
 int readCountryFromDisk(Country country[])
 {
 	ifstream countries;
-	string line;
+	string line, countryName, countryID;
+	int count = 0;
+
+	Country temp;
 
 	countries.open(COUNTRIES_PATH.c_str());
 
-	int count = 0;
 
 	if (!countries.is_open())
 	{
@@ -170,8 +177,6 @@ int readCountryFromDisk(Country country[])
 
 		return 0;
 	}
-	
-	string countryName, countryID;
 
 	while (getline(countries, line))
 	{
@@ -184,10 +189,10 @@ int readCountryFromDisk(Country country[])
 
 			if (!doesCountryExist(stoi(countryID), country, count))
 			{
-				country[count].idCountry = stoi(countryID);
-				country[count].name = countryName;
+				temp.idCountry = stoi(countryID);
+				temp.name = countryName;
 
-				count++;
+				insertCountry(temp, country, count);
 			}
 			else
 			{

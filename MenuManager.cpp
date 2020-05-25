@@ -6,8 +6,6 @@
 
 using namespace std;
 
-const int LOGIN_MAX_ROWS = 50, LOGIN_MAX_COLUMNS = 2;
-
 /*
  * The following is a list of all prototype functions invoked in all menus and submenus, these functions can be found in the Country.cpp, Assessment.cpp and Administration.cpp file.
  */
@@ -168,6 +166,7 @@ void openCreationMenu(Country TC[], Administration TA[], Assessment TS[], int TC
 	{
 	case COUNTRY_CREATION:
 	{
+
 		Country country = createCountry(TC, TC_SIZE);
 		insertCountry(country, TC, TC_SIZE);
 		reloadCountries(TC, TC_SIZE);
@@ -184,11 +183,11 @@ void openCreationMenu(Country TC[], Administration TA[], Assessment TS[], int TC
 			Administration administration = createAdministration(TA, TC, TA_SIZE, TC_SIZE);
 			insertAdministration(administration, TA, TA_SIZE);
 			reloadAdministrations(TA, TA_SIZE);
+
 		}
 		else
-		{
 			cout << endl << "Error! Please create a country before creating an administration." << endl << endl;
-		}
+		
 		
 
 		openCreationMenu(TC, TA, TS, TC_SIZE, TA_SIZE, TS_SIZE, login, userAmount);
@@ -198,14 +197,15 @@ void openCreationMenu(Country TC[], Administration TA[], Assessment TS[], int TC
 	{
 		if (TA_SIZE != 0)
 		{
+
 			Assessment assessment = createAssessment(TS, TS_SIZE, TA, TA_SIZE);
 			insertAssessment(assessment, TS, TA, TS_SIZE, TA_SIZE);
 			reloadAssessments(TS, TS_SIZE);
+			
 		}
 		else
-		{
 			cout << endl << "Error! Please create an administration before creating an assessment." << endl << endl;
-		}
+		
 
 		openCreationMenu(TC, TA, TS, TC_SIZE, TA_SIZE, TS_SIZE, login, userAmount);
 		break;
@@ -525,6 +525,16 @@ void openManagementMenu(Country TC[], Administration TA[], Assessment TS[], int 
 	case SHOW_LOWER_VALUE:
 		int value, countryID;
 
+		if (TC_SIZE == 0) {
+			cout << endl << "\aERROR! Please create a country before issuing this management command!" << endl;
+			break;
+		}
+
+		if (TA_SIZE == 0) {
+			cout << endl << "\aERROR! Please create an administration before issuing this management command!" << endl;
+			break;
+		}
+
 		cout << "Please input the country id: ";
 
 		cin >> countryID;
@@ -553,6 +563,16 @@ void openManagementMenu(Country TC[], Administration TA[], Assessment TS[], int 
 	case EVOLUTION_OF_INNOVATION:
 
 		int startYear, endYear, administrationID;
+
+		if (TA_SIZE == 0) {
+			cout << endl << "\aERROR! Please create an administration before issuing this management command!" << endl;
+			break;
+		}
+
+		if (TS_SIZE == 0) {
+			cout << endl << "\aERROR! Please create an assessment before issuing this management command!" << endl;
+			break;
+		}
 
 		cout << "Please input the administrationID: ";
 		cin >> administrationID;
@@ -684,9 +704,9 @@ void openMainMenu(Country TC[], Administration TA[], Assessment TS[], int TC_SIZ
  */
 void getStartupConfigurations(string login[][LOGIN_MAX_COLUMNS], int userAmount)
 {
-	Country TC[250];
-	Administration TA[1000];
-	Assessment TS[1000];
+	Country TC[TC_MAX_SIZE];
+	Administration TA[TA_MAX_SIZE];
+	Assessment TS[TS_MAX_SIZE];
 
 	int TC_SIZE = readCountryFromDisk(TC),
 		TA_SIZE = readAdministrationFromDisk(TA, TC, TC_SIZE),

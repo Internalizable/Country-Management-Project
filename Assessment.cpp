@@ -7,6 +7,7 @@ using namespace std;
 
 const string ASSESSMENT_PATH = "data\\assessments.csv";
 
+
 bool doesAdministrationExist(int administrationID, Administration* T, int a, int b);
 
 bool doesAssessmentExist(int assessmentID, Assessment* T, int TS_SIZE)
@@ -184,29 +185,36 @@ void sortAssessmentDescending(Assessment T[], int first, int last)
 
 void insertAssessment(Assessment assessment, Assessment T[], Administration A[], int& assessmentSize, int administrationSize)
 {
-	int pos = assessmentSize;
 
-	for (int i = assessmentSize - 1; i >= 0; i--)
+	if (assessmentSize != TS_MAX_SIZE)
 	{
-		if (T[i].idAdministration == assessment.idAdministration)
+		int pos = assessmentSize;
+
+		for (int i = assessmentSize - 1; i >= 0; i--)
 		{
-			pos = i + 1;
-			break;
+			if (T[i].idAdministration == assessment.idAdministration)
+			{
+				pos = i + 1;
+				break;
+			}
 		}
+
+		for (int i = assessmentSize; i > pos; i--)
+			T[i] = T[i - 1];
+
+		T[pos] = assessment;
+
+		for (int i = 0; i < administrationSize; i++)
+		{
+			if (A[i].idAdministration == assessment.idAdministration)
+				A[i].currentValue = assessment.value;
+		}
+
+		assessmentSize++;
 	}
+	else
+		cout << endl << "ERROR: Unable to add more entries to the assessment array, please consider deleting assessments before trying to add/create new ones!" << endl;
 
-	for (int i = assessmentSize; i > pos; i--)
-		T[i] = T[i - 1];
-
-	T[pos] = assessment;
-
-	for (int i = 0; i < administrationSize; i++)
-	{
-		if (A[i].idAdministration == assessment.idAdministration)
-			A[i].currentValue = assessment.value;
-	}
-
-	assessmentSize++;
 }
 
 void deleteAssessment(Assessment T[], int &assessmentSize, int idAssessment) {
@@ -235,11 +243,12 @@ void deleteAssessment(Assessment T[], int &assessmentSize, int idAssessment) {
 int readAssessmentFromDisk(Assessment assessment[], Administration TA[], int TA_SIZE)
 {
 	ifstream assessments;
-	string line;
+	string line, assessmentID, administrationID, value, year, month, evaluatorString;;
+	int count = 0;
+
+	Assessment temp;
 
 	assessments.open(ASSESSMENT_PATH.c_str());
-
-	int count = 0;
 
 	if (!assessments.is_open())
 	{
@@ -251,8 +260,6 @@ int readAssessmentFromDisk(Assessment assessment[], Administration TA[], int TA_
 
 		return 0;
 	}
-
-	string assessmentID, administrationID, value, year, month, evaluatorString;
 
 	while (getline(assessments, line))
 	{
@@ -278,18 +285,18 @@ int readAssessmentFromDisk(Assessment assessment[], Administration TA[], int TA_
 
 						if (!doesAssessmentExist(stoi(assessmentID), assessment, count))
 						{
-							assessment[count].idAssessment = stoi(assessmentID);
-							assessment[count].idAdministration = stoi(administrationID);
-							assessment[count].value = stoi(value);
-							assessment[count].year = stoi(year);
-							assessment[count].month = stoi(month);
+							temp.idAssessment = stoi(assessmentID);
+							temp.idAdministration = stoi(administrationID);
+							temp.value = stoi(value);
+							temp.year = stoi(year);
+							temp.month = stoi(month);
 
 							for (int i = 0; i <= evaluatorString.length(); i++)
 							{
-								assessment[count].evaluator[i] = evaluatorString[i];
+								temp.evaluator[i] = evaluatorString[i];
 							}
 
-							count++;
+							insertAssessment(temp, assessment, TA, count, TA_SIZE);
 						}
 						else
 						{

@@ -183,23 +183,28 @@ void sortAdministrationDescending(Administration T[], int first, int last)
 
 void insertAdministration(Administration administration, Administration TA[], int& TA_SIZE)
 {
-	int pos = TA_SIZE;
-
-	for (int i = TA_SIZE - 1; i >= 0; i--)
+	if (TA_SIZE != TA_MAX_SIZE)
 	{
-		if (TA[i].idCountry == administration.idCountry)
+		int pos = TA_SIZE;
+
+		for (int i = TA_SIZE - 1; i >= 0; i--)
 		{
-			pos = i + 1;
-			break;
+			if (TA[i].idCountry == administration.idCountry)
+			{
+				pos = i + 1;
+				break;
+			}
 		}
+
+		for (int i = TA_SIZE; i > pos; i--)
+			TA[i] = TA[i - 1];
+
+		TA[pos] = administration;
+
+		TA_SIZE++;
 	}
-
-	for (int i = TA_SIZE; i > pos; i--)
-		TA[i] = TA[i - 1];
-
-	TA[pos] = administration;
-
-	TA_SIZE++;
+	else
+		cout << endl << "ERROR: Unable to add more entries to the administration array, please consider deleting administrations before trying to add/create new ones!" << endl;
 }
 
 void deleteAdministration(Administration T[], int& administrationSize, int idAdmin) {
@@ -222,11 +227,11 @@ void deleteAdministration(Administration T[], int& administrationSize, int idAdm
 int readAdministrationFromDisk(Administration administration[], Country TC[], int TC_SIZE)
 {
 	ifstream adminFile;
-	string line;
+	string line, administrationID, countryID, name, currentValue;
+	int count = 0;
+	Administration temp;
 
 	adminFile.open(ADMINISTRATION_PATH.c_str());
-
-	int count = 0;
 
 	if (!adminFile.is_open())
 	{
@@ -238,8 +243,6 @@ int readAdministrationFromDisk(Administration administration[], Country TC[], in
 
 		return 0;
 	}
-
-	string administrationID, countryID, name, currentValue;
 
 	while (getline(adminFile, line))
 	{
@@ -259,12 +262,12 @@ int readAdministrationFromDisk(Administration administration[], Country TC[], in
 
 					if (!doesAdministrationExist(stoi(administrationID), administration, 0, count - 1))
 					{
-						administration[count].idAdministration = stoi(administrationID);
-						administration[count].idCountry = stoi(countryID);
-						administration[count].name = name;
-						administration[count].currentValue = stoi(currentValue);
+						temp.idAdministration = stoi(administrationID);
+						temp.idCountry = stoi(countryID);
+						temp.name = name;
+						temp.currentValue = stoi(currentValue);
 
-						count++;
+						insertAdministration(temp, administration, count);
 					}
 					else
 					{
@@ -310,7 +313,6 @@ string getAdministrationFormat(Administration administration)
 void writeAdministrationsToDisk(Administration administration[], int TA_SIZE)
 {
 	string currentLine;
-
 	ofstream adminFile(ADMINISTRATION_PATH.c_str());
 
 	if (adminFile.is_open()) {
